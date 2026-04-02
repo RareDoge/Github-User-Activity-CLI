@@ -3,16 +3,16 @@ import sys
 
  # Fetch Github Data using Github CLI API
 
-def process_events(data):
+def process_events(user, data):
 
     event_map = {
-        "IssuesEvent": f"- Opened a new issue in",
-        "CreateEvent": f"- Created a new repository",
-        "PullRequestEvent": f"- opened pull request on",
-        "IssueCommentEvent": f"- commented on issue on",
-        'ForkEvent':f"- forked ",
-        'PublicEvent': f"- made repository public",
-        "WatchEvent": f"- Began a Watch Event on"
+        "IssuesEvent": f"- {user.capitalize()} Opened a new issue in",
+        "CreateEvent": f"- {user.capitalize()} Created a new repository",
+        "PullRequestEvent": f"- {user.capitalize()} opened pull request on",
+        "IssueCommentEvent": f"- {user.capitalize()} commented on issue on",
+        'ForkEvent':f"- {user.capitalize()} forked ",
+        'PublicEvent': f"- {user.capitalize()} made repository public",
+        "WatchEvent": f"- {user.capitalize()} Began a Watch Event on"
     }
     user_activities = []
 
@@ -28,31 +28,37 @@ def process_events(data):
             else:
                 repo_commits[repo_name] = 1
     for repo,count in repo_commits.items():
-        user_activities.append( f"- Pushed {count} commits in {repo}")
+        user_activities.append( f"- {user.capitalize()} Pushed {count} commits in {repo}")
     
     return user_activities
         
 
 
 def main():
-    invalid_username = True
-    while invalid_username : 
-        username = input("Enter a username: ")
-        url = f"https://api.github.com/users/{username}/events"
+
+    if len(sys.argv) < 2:
+        print("Usage: python Github-User-Activity-CLI.py <username>")
+        return
+
+    username = sys.argv[1]
+    url = f"https://api.github.com/users/{username}/events"
+
+    try:
         response = requests.get(url)
 
         if response.status_code == 200:
-            invalid_username = False
             data = response.json()
-            user_test = process_events(data)
+            user_test = process_events(username ,data)
 
             for user in user_test:
                 print(user)
-
         elif response.status_code == 404:
-            print("This is not a valid username, please try again...")
+            raise ValueError(f"{response.status_code}\nThis is not a valid username, please try again...")
         else:
-            print(f"Unable to Fetch data, {response.status_code}")
+            raise ValueError(f"Unable to Fetch data, {response.status_code}")
+            
+    except Exception as error:
+        print(f"Error {error}")
 
 if __name__ == "__main__":
     main()
